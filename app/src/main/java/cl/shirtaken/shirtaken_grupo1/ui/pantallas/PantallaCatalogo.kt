@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import cl.shirtaken.shirtaken_grupo1.viewmodel.PolerasViewModel
@@ -17,23 +18,43 @@ import cl.shirtaken.shirtaken_grupo1.viewmodel.PolerasViewModel
 @Composable
 fun PantallaCatalogo(
     vm: PolerasViewModel = PolerasViewModel(),
-    abrirDetalle: (Int) -> Unit
+    abrirDetalle: (Int) -> Unit,
+    abrirCarrito: () -> Unit
 ) {
     LaunchedEffect(Unit) { vm.cargar() }
     val items = vm.catalogo.value
 
-    Scaffold(topBar = { CenterAlignedTopAppBar(title = { Text("Catálogo") }) }) { p ->
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Catálogo") },
+                actions = { TextButton(onClick = abrirCarrito) { Text("Carrito") } }
+            )
+        }
+    ) { p ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(p).padding(12.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(p)
+                .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(items) { polera ->
                 Card(
-                    modifier = Modifier.fillMaxWidth().clickable { abrirDetalle(polera.id) }
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { abrirDetalle(polera.id) }
                 ) {
-                    Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(
+                        Modifier.padding(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                         Image(
-                            painter = rememberAsyncImagePainter(polera.urlImagen),
+                            painter = rememberAsyncImagePainter(
+                                model = polera.urlImagen,
+                                placeholder = painterResource(android.R.drawable.ic_menu_report_image),
+                                error = painterResource(android.R.drawable.ic_menu_report_image)
+                            ),
                             contentDescription = polera.nombre,
                             modifier = Modifier.size(84.dp)
                         )
@@ -41,7 +62,9 @@ fun PantallaCatalogo(
                             Text(polera.nombre, style = MaterialTheme.typography.titleMedium)
                             Text("${polera.marca} · Talla ${polera.talla} · ${polera.color}")
                             Text("Precio: $${polera.precio}")
-                            if (!polera.conStock) Text("Sin stock", color = MaterialTheme.colorScheme.error)
+                            if (!polera.conStock) {
+                                Text("Sin stock", color = MaterialTheme.colorScheme.error)
+                            }
                         }
                         AssistChip(
                             onClick = { vm.alternarFavorito(polera.id) },

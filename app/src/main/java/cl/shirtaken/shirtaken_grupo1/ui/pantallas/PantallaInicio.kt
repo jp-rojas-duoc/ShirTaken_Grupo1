@@ -10,15 +10,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun PantallaInicio(abrirCatalogo: () -> Unit) {
+fun PantallaInicio(abrirCatalogo: () -> Unit, abrirCarrito: () -> Unit) {
     Scaffold(topBar = { CenterAlignedTopAppBar(title = { Text("ShirTaken") }) }) { p ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(p).padding(16.dp),
+            Modifier.fillMaxSize().padding(p).padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text("Bienvenido a ShirTaken", style = MaterialTheme.typography.headlineSmall)
             Button(onClick = abrirCatalogo) { Text("Explorar catálogo") }
+            OutlinedButton(onClick = abrirCarrito) { Text("Ver carrito") }
         }
     }
 }
