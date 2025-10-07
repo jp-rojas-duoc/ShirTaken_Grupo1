@@ -7,4 +7,4 @@ La aplicación actualmente posee las siguientes funcionalidades:
 * Ver catálogo
 * Ver información de producto (imagen, precio, talla)
 
-La aplicación esta diseñada para usarse idealmente con dispositivos usando android 16 en adelante, la build actual utiliza gradle 8.1, actualmente solo usamos dependencias que vienen por defecto en android studio, la versión de android studio usada es Narwhal feature drop patch 1.
+La aplicación esta diseñada para usarse idealmente con dispositivos usando android 16 (SDK 36) en adelante, pero por el momento se ha comprobado que funciona hasta en dispositivos usando android 8 (SDK 26), la build actual utiliza gradle 8.13, actualmente solo usamos dependencias que vienen por defecto en android studio, la versión de android studio usada es Narwhal feature drop patch 1.
