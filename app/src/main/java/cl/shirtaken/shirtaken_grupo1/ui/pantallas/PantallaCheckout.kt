@@ -20,6 +20,8 @@ fun PantallaCheckout(
     var email by remember { mutableStateOf("") }
     var telefono by remember { mutableStateOf("") }
     var direccion by remember { mutableStateOf("") }
+    var cargando by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
 
     val eNombre = Validadores.nombre(nombre)
     val eEmail = Validadores.email(email)
@@ -34,10 +36,15 @@ fun PantallaCheckout(
                 title = { Text("Pago") },
                 navigationIcon = { TextButton(onClick = cancelar) { Text("Volver") } }
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = remember { SnackbarHostState() })
         }
     ) { p ->
-        Column(Modifier.fillMaxSize().padding(p).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-
+        Column(
+            Modifier.fillMaxSize().padding(p).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             Text("Resumen: ${vm.items.size} productos · Total $${vm.total}")
 
             OutlinedTextField(
@@ -65,12 +72,39 @@ fun PantallaCheckout(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            if (error != null) {
+                Text(error!!, color = MaterialTheme.colorScheme.error)
+            }
+
             Spacer(Modifier.height(8.dp))
             Button(
-                onClick = { finalizar() },
-                enabled = valido,
+                onClick = {
+                    cargando = true
+                    error = null
+                    vm.confirmarCompra(
+                        onOk = {
+                            cargando = false
+                            finalizar()
+                        },
+                        onError = { msg ->
+                            cargando = false
+                            error = msg
+                        }
+                    )
+                },
+                enabled = valido && !cargando,
                 modifier = Modifier.fillMaxWidth()
-            ) { Text("Confirmar compra") }
+            ) {
+                if (cargando) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(Modifier.width(8.dp))
+                }
+                Text("Confirmar compra")
+            }
 
             if (vm.items.isEmpty()) {
                 Text("Tu carrito está vacío. Vuelve y agrega productos.")

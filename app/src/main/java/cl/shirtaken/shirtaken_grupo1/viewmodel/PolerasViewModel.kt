@@ -1,24 +1,32 @@
 package cl.shirtaken.shirtaken_grupo1.viewmodel
 
-import android.view.View
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import cl.shirtaken.shirtaken_grupo1.model.Polera
-import cl.shirtaken.shirtaken_grupo1.repository.RepositorioPoleras
+import cl.shirtaken.shirtaken_grupo1.repository.RepositorioPolerasRoom
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
-class PolerasViewModel (
-    private val repo: RepositorioPoleras = RepositorioPoleras()
-): ViewModel() {
-    private val _catalogo = mutableStateOf<List<Polera>>(emptyList())
-    val catalogo: State<List<Polera>> = _catalogo
+class PolerasViewModel(app: Application) : AndroidViewModel(app) {
+    private val repo = RepositorioPolerasRoom(app)
 
-    fun cargar() {_catalogo.value = repo.obtenerTodas()}
-    fun obtenerPorId(id: Int): Polera? = repo.obtenerPorId(id)
+    val catalogo: StateFlow<List<Polera>> =
+        repo.observarCatalogo().stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            emptyList()
+        )
 
-    fun alternarFavorito(id: Int) {
-        _catalogo.value = _catalogo.value.map {
-            if (it.id == id) it.copy(esFavorita = !it.esFavorita) else  it
-        }
+    init {
+        viewModelScope.launch { repo.poblarSiVacio() }
     }
+
+    fun crear(p: Polera, stock: Int) = viewModelScope.launch { repo.crear(p, stock) }
+    fun actualizar(p: Polera, stock: Int) = viewModelScope.launch { repo.actualizar(p, stock) }
+    fun eliminar(p: Polera) = viewModelScope.launch { repo.eliminar(p) }
+
+    suspend fun obtenerPorId(id: Int): Polera? = repo.obtenerPorId(id)
 }

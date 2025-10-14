@@ -1,87 +1,79 @@
 package cl.shirtaken.shirtaken_grupo1.ui.navegacion
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import cl.shirtaken.shirtaken_grupo1.ui.pantallas.*
+import cl.shirtaken.shirtaken_grupo1.model.Polera
+import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaCatalogo
+import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaCarrito
+import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaCheckout
+import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaDetalle
+import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaInicio
 import cl.shirtaken.shirtaken_grupo1.viewmodel.CarritoViewModel
-
-// Rutas centralizadas
-private sealed class Ruta(val valor: String) {
-    data object Inicio   : Ruta("inicio")
-    data object Catalogo: Ruta("catalogo")
-    data object Carrito : Ruta("carrito")
-    data object Pago    : Ruta("pago")
-    data object Detalle : Ruta("detalle/{id}") {
-        fun crear(id: Int) = "detalle/$id"
-        const val ARG_ID = "id"
-    }
-}
 
 @Composable
 fun AppNavegacion() {
     val nav = rememberNavController()
-    // VM del carrito compartido entre pantallas
-    val vmCarrito = remember { CarritoViewModel() }
 
-    NavHost(navController = nav, startDestination = Ruta.Inicio.valor) {
+    // ViewModel de carrito compartido por todo el grafo (misma instancia en Carrito/Checkout/Detalle)
+    val vmCarrito: CarritoViewModel = viewModel()
 
-        composable(Ruta.Inicio.valor) {
+    NavHost(navController = nav, startDestination = "inicio") {
+
+        // Inicio: firma (abrirCatalogo, abrirCarrito)
+        composable("inicio") {
             PantallaInicio(
-                abrirCatalogo = { nav.navigateSingleTop(Ruta.Catalogo.valor) },
-                abrirCarrito  = { nav.navigateSingleTop(Ruta.Carrito.valor) }
+                abrirCatalogo = { nav.navigate("catalogo") },
+                abrirCarrito  = { nav.navigate("carrito") }
             )
         }
 
-        composable(Ruta.Catalogo.valor) {
+        // Catálogo: firma (abrirDetalle, abrirCarrito)
+        composable("catalogo") {
             PantallaCatalogo(
-                abrirDetalle = { id -> nav.navigateSingleTop(Ruta.Detalle.crear(id)) },
-                abrirCarrito = { nav.navigateSingleTop(Ruta.Carrito.valor) }
+                abrirDetalle = { id -> nav.navigate("detalle/$id") },
+                abrirCarrito = { nav.navigate("carrito") }
             )
         }
 
+        // Detalle: firma (id, volver, agregarAlCarrito, abrirCarrito)
         composable(
-            route = Ruta.Detalle.valor,
-            arguments = listOf(navArgument(Ruta.Detalle.ARG_ID) { type = NavType.IntType })
-        ) { back ->
-            val id = back.arguments?.getInt(Ruta.Detalle.ARG_ID) ?: 0
+            route = "detalle/{id}",
+            arguments = listOf(navArgument("id") { type = NavType.IntType })
+        ) { entry ->
+            val id = entry.arguments?.getInt("id") ?: 0
             PantallaDetalle(
                 id = id,
                 volver = { nav.popBackStack() },
-                agregarAlCarrito = { polera -> vmCarrito.agregar(polera) }, // ✅ agrega
-                abrirCarrito = { nav.navigateSingleTop(Ruta.Carrito.valor) } // ✅ navega
+                agregarAlCarrito = { p: Polera -> vmCarrito.agregar(p) },
+                abrirCarrito = { nav.navigate("carrito") }
             )
         }
 
-        composable(Ruta.Carrito.valor) {
+        // Carrito: firma (vm, volver, irAPago)
+        composable("carrito") {
             PantallaCarrito(
                 vm = vmCarrito,
                 volver = { nav.popBackStack() },
-                irAPago = { nav.navigateSingleTop(Ruta.Pago.valor) }
+                irAPago = { nav.navigate("checkout") }
             )
         }
 
-        composable(Ruta.Pago.valor) {
+        // Checkout: firma (vm, cancelar, finalizar)
+        composable("checkout") {
             PantallaCheckout(
                 vm = vmCarrito,
                 cancelar = { nav.popBackStack() },
                 finalizar = {
-                    vmCarrito.limpiar()
-                    nav.navigate(Ruta.Inicio.valor) {
-                        popUpTo(Ruta.Inicio.valor) { inclusive = false }
-                        launchSingleTop = true
-                    }
+                    // Aquí puedes invocar vmCarrito.confirmarCompra() cuando lo implementes
+                    // y luego navegar/limpiar si corresponde.
+                    nav.popBackStack() // vuelve al carrito o a inicio según tu flujo
                 }
             )
         }
     }
-}
-
-// Extensión para no duplicar pantallas al navegar
-private fun androidx.navigation.NavController.navigateSingleTop(ruta: String) {
-    this.navigate(ruta) { launchSingleTop = true }
 }

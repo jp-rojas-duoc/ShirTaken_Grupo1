@@ -1,12 +1,20 @@
 package cl.shirtaken.shirtaken_grupo1.viewmodel
 
+import android.app.Application
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import cl.shirtaken.shirtaken_grupo1.model.ItemCarrito
 import cl.shirtaken.shirtaken_grupo1.model.Polera
+import cl.shirtaken.shirtaken_grupo1.repository.RepositorioPedidos
+import cl.shirtaken.shirtaken_grupo1.repository.RepositorioPolerasRoom
+import kotlinx.coroutines.launch
 
-class CarritoViewModel : ViewModel() {
+class CarritoViewModel(app: Application) : AndroidViewModel(app) {
+
+    private val repoPoleras = RepositorioPolerasRoom(app)
+    private val repoPedidos = RepositorioPedidos(app)
 
     private val _items: SnapshotStateList<ItemCarrito> = mutableStateListOf()
     val items: List<ItemCarrito> get() = _items
@@ -19,7 +27,6 @@ class CarritoViewModel : ViewModel() {
             _items.add(ItemCarrito(p.id, p.nombre, p.precio, 1, p.urlImagen))
         } else {
             existente.cantidad += 1
-            // fuerza recomposición
             _items[_items.indexOf(existente)] = existente.copy()
         }
     }
@@ -47,4 +54,26 @@ class CarritoViewModel : ViewModel() {
     }
 
     fun limpiar() = _items.clear()
+
+    // Guarda pedido + descuenta stock; notifica resultado
+    fun confirmarCompra(
+        onOk: (Long) -> Unit,
+        onError: (String) -> Unit
+    ) = viewModelScope.launch {
+        try {
+            if (_items.isEmpty()) throw IllegalStateException("Carrito vacío")
+            // Descontar stock por cada ítem; si alguno falla, aborta
+            for (it in _items) {
+                val ok = repoPoleras.descontarStock(it.id, it.cantidad)
+                if (!ok) throw IllegalStateException("Sin stock para ${it.nombre}")
+            }
+            // Registrar pedido e items
+            val idPedido = repoPedidos.registrarPedido(_items.toList(), total)
+            // Limpiar carrito
+            limpiar()
+            onOk(idPedido)
+        } catch (t: Throwable) {
+            onError(t.message ?: "Error al confirmar compra")
+        }
+    }
 }
