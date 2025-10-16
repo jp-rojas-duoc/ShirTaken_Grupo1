@@ -1,5 +1,8 @@
 package cl.shirtaken.shirtaken_grupo1.ui.navegacion
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -18,32 +21,39 @@ import cl.shirtaken.shirtaken_grupo1.viewmodel.CarritoViewModel
 @Composable
 fun AppNavegacion() {
     val nav = rememberNavController()
-
-    // ViewModel de carrito compartido por todo el grafo (misma instancia en Carrito/Checkout/Detalle)
     val vmCarrito: CarritoViewModel = viewModel()
+
+    val duracionAnimacion = 300
 
     NavHost(navController = nav, startDestination = "inicio") {
 
-        // Inicio: firma (abrirCatalogo, abrirCarrito)
         composable("inicio") {
             PantallaInicio(
                 abrirCatalogo = { nav.navigate("catalogo") },
-                abrirCarrito  = { nav.navigate("carrito") }
+                abrirCarrito = { nav.navigate("carrito") }
             )
         }
 
-        // Catálogo: firma (abrirDetalle, abrirCarrito)
-        composable("catalogo") {
+        composable(
+            route = "catalogo",
+            enterTransition = { slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(duracionAnimacion)) },
+            exitTransition = { slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(duracionAnimacion)) },
+            popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(duracionAnimacion)) },
+            popExitTransition = { slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(duracionAnimacion)) }
+        ) {
             PantallaCatalogo(
                 abrirDetalle = { id -> nav.navigate("detalle/$id") },
                 abrirCarrito = { nav.navigate("carrito") }
             )
         }
 
-        // Detalle: firma (id, volver, agregarAlCarrito, abrirCarrito)
         composable(
             route = "detalle/{id}",
-            arguments = listOf(navArgument("id") { type = NavType.IntType })
+            arguments = listOf(navArgument("id") { type = NavType.IntType }),
+            enterTransition = { slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(duracionAnimacion)) },
+            exitTransition = { slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(duracionAnimacion)) },
+            popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(duracionAnimacion)) },
+            popExitTransition = { slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(duracionAnimacion)) }
         ) { entry ->
             val id = entry.arguments?.getInt("id") ?: 0
             PantallaDetalle(
@@ -54,8 +64,13 @@ fun AppNavegacion() {
             )
         }
 
-        // Carrito: firma (vm, volver, irAPago)
-        composable("carrito") {
+        composable(
+            route = "carrito",
+            enterTransition = { slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(duracionAnimacion)) },
+            exitTransition = { slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(duracionAnimacion)) },
+            popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(duracionAnimacion)) },
+            popExitTransition = { slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(duracionAnimacion)) }
+        ) {
             PantallaCarrito(
                 vm = vmCarrito,
                 volver = { nav.popBackStack() },
@@ -63,15 +78,20 @@ fun AppNavegacion() {
             )
         }
 
-        // Checkout: firma (vm, cancelar, finalizar)
-        composable("checkout") {
+        composable(
+            route = "checkout",
+            enterTransition = { slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(duracionAnimacion)) },
+            exitTransition = { slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(duracionAnimacion)) },
+            popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(duracionAnimacion)) },
+            popExitTransition = { slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(duracionAnimacion)) }
+        ) {
             PantallaCheckout(
                 vm = vmCarrito,
                 cancelar = { nav.popBackStack() },
                 finalizar = {
-                    // Aquí puedes invocar vmCarrito.confirmarCompra() cuando lo implementes
-                    // y luego navegar/limpiar si corresponde.
-                    nav.popBackStack() // vuelve al carrito o a inicio según tu flujo
+                    nav.navigate("catalogo") {
+                        popUpTo("inicio")
+                    }
                 }
             )
         }
