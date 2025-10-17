@@ -22,4 +22,11 @@ interface PoleraDao {
 
     @Query("UPDATE poleras SET stock = stock - :cantidad WHERE id = :poleraId AND stock >= :cantidad")
     suspend fun descontarStock(poleraId: Int, cantidad: Int): Int
+
+
+    @Query("SELECT stock FROM poleras WHERE id = :id LIMIT 1")
+    suspend fun obtenerStock(id: Int): Int?
+
+
+
 }

@@ -31,10 +31,18 @@ class CarritoViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun sumar(id: Int) {
-        _items.find { it.id == id }?.let {
-            it.cantidad += 1
-            _items[_items.indexOf(it)] = it.copy()
+    // Suma validando stock; notifica por callback si no alcanza
+    fun sumar(id: Int, onSinStock: (() -> Unit)? = null) {
+        val item = _items.find { it.id == id } ?: return
+        viewModelScope.launch {
+            // Consulta stock actual en BD y compara con lo que quieres dejar
+            val stockDisponible = try { repoPoleras.consultarStock(item.id) } catch (_: Throwable) { 0 }
+            if (stockDisponible >= item.cantidad + 1) {
+                item.cantidad += 1
+                _items[_items.indexOf(item)] = item.copy()
+            } else {
+                onSinStock?.invoke()
+            }
         }
     }
 
