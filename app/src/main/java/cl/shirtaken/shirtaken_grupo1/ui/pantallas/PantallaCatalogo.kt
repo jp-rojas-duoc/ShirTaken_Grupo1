@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package cl.shirtaken.shirtaken_grupo1.ui.pantallas
 
 import androidx.compose.foundation.clickable
@@ -12,18 +14,19 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.shirtaken.shirtaken_grupo1.model.Polera
 import cl.shirtaken.shirtaken_grupo1.viewmodel.PolerasViewModel
 import coil.compose.AsyncImage
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 @Composable
 fun PantallaCatalogo(
     abrirDetalle: (Int) -> Unit,
     abrirCarrito: () -> Unit,
+    abrirHistorial: (() -> Unit)? = null, // opcional para navegar a historial
     vm: PolerasViewModel = viewModel()
 ) {
     val catalogo by vm.catalogo.collectAsState()
@@ -32,7 +35,13 @@ fun PantallaCatalogo(
         topBar = {
             TopAppBar(
                 title = { Text("Catálogo") },
-                actions = { TextButton(onClick = abrirCarrito) { Text("Carrito") } }
+                actions = {
+                    TextButton(onClick = abrirCarrito) { Text("Carrito") }
+                    // Botón Historial (si se entrega callback desde navegación)
+                    if (abrirHistorial != null) {
+                        TextButton(onClick = abrirHistorial) { Text("Historial") }
+                    }
+                }
             )
         }
     ) { padding ->

@@ -5,8 +5,21 @@ package cl.shirtaken.shirtaken_grupo1.ui.pantallas
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -41,16 +54,18 @@ fun PantallaDetalle(
             )
         },
         floatingActionButton = {
-            polera?.let { p ->
+            val p = polera
+            if (p != null) {
                 ExtendedFloatingActionButton(
-                    onClick = { agregarAlCarrito(p) }
-                ) {
-                    Text("Agregar al carrito")
-                }
+                    text = { Text(if (p.conStock) "Agregar al carrito" else "Sin stock") },
+                    icon = {},
+                    onClick = { if (p.conStock) agregarAlCarrito(p) }
+                )
             }
         }
     ) { padding ->
-        polera?.let { p ->
+        val p = polera
+        if (p != null) {
             Column(Modifier.padding(padding).padding(16.dp)) {
                 AsyncImage(model = p.urlImagen, contentDescription = p.nombre)
                 Spacer(Modifier.height(12.dp))
@@ -64,10 +79,8 @@ fun PantallaDetalle(
                 Spacer(Modifier.height(8.dp))
                 Button(onClick = abrirCarrito) { Text("Ver carrito") }
             }
-        } ?: run {
-            Box(Modifier.padding(padding).fillMaxSize()) {
-                CircularProgressIndicator()
-            }
+        } else {
+            Box(Modifier.padding(padding).fillMaxSize()) { CircularProgressIndicator() }
         }
     }
 }

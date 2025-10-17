@@ -13,18 +13,17 @@ import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaCarrito
 import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaCheckout
 import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaDetalle
 import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaInicio
+import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaHistorial
 import cl.shirtaken.shirtaken_grupo1.viewmodel.CarritoViewModel
 
 @Composable
 fun AppNavegacion() {
     val nav = rememberNavController()
-
-    // ViewModel de carrito compartido por todo el grafo (misma instancia en Carrito/Checkout/Detalle)
     val vmCarrito: CarritoViewModel = viewModel()
 
     NavHost(navController = nav, startDestination = "inicio") {
 
-        // Inicio: firma (abrirCatalogo, abrirCarrito)
+        // Inicio: ahora con botón a historial
         composable("inicio") {
             PantallaInicio(
                 abrirCatalogo = { nav.navigate("catalogo") },
@@ -32,15 +31,15 @@ fun AppNavegacion() {
             )
         }
 
-        // Catálogo: firma (abrirDetalle, abrirCarrito)
         composable("catalogo") {
             PantallaCatalogo(
                 abrirDetalle = { id -> nav.navigate("detalle/$id") },
-                abrirCarrito = { nav.navigate("carrito") }
+                abrirCarrito = { nav.navigate("carrito") },
+                abrirHistorial = { nav.navigate("historial") }
             )
         }
 
-        // Detalle: firma (id, volver, agregarAlCarrito, abrirCarrito)
+
         composable(
             route = "detalle/{id}",
             arguments = listOf(navArgument("id") { type = NavType.IntType })
@@ -54,7 +53,6 @@ fun AppNavegacion() {
             )
         }
 
-        // Carrito: firma (vm, volver, irAPago)
         composable("carrito") {
             PantallaCarrito(
                 vm = vmCarrito,
@@ -63,16 +61,25 @@ fun AppNavegacion() {
             )
         }
 
-        // Checkout: firma (vm, cancelar, finalizar)
         composable("checkout") {
             PantallaCheckout(
                 vm = vmCarrito,
                 cancelar = { nav.popBackStack() },
                 finalizar = {
-                    // Aquí puedes invocar vmCarrito.confirmarCompra() cuando lo implementes
-                    // y luego navegar/limpiar si corresponde.
-                    nav.popBackStack() // vuelve al carrito o a inicio según tu flujo
+                    // Ir a historial y dejar carrito vacío (ya se limpia en confirmarCompra)
+                    nav.navigate("historial") {
+                        popUpTo("catalogo") { inclusive = false }
+                        launchSingleTop = true
+                    }
                 }
+            )
+        }
+
+
+        // Nueva ruta: historial de compras
+        composable("historial") {
+            PantallaHistorial(
+                volver = { nav.popBackStack() }
             )
         }
     }
