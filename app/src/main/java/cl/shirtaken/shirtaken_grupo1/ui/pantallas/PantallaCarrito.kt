@@ -2,16 +2,21 @@
 
 package cl.shirtaken.shirtaken_grupo1.ui.pantallas
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import cl.shirtaken.shirtaken_grupo1.ui.components.AppTopBar
+import cl.shirtaken.shirtaken_grupo1.ui.components.PriceTag
+import cl.shirtaken.shirtaken_grupo1.ui.components.PrimaryButton
+import cl.shirtaken.shirtaken_grupo1.ui.components.EmptyState
 import cl.shirtaken.shirtaken_grupo1.viewmodel.CarritoViewModel
 
 @Composable
@@ -20,77 +25,67 @@ fun PantallaCarrito(
     volver: () -> Unit,
     irAPago: () -> Unit
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
+    val items = vm.items
+    val total = vm.total
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Carrito") },
-                navigationIcon = { TextButton(onClick = volver) { Text("Volver") } }
-            )
-        },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { padding ->
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text("Total: $${vm.total}", style = MaterialTheme.typography.titleMedium)
-
-            AnimatedVisibility(visible = vm.items.isEmpty()) {
-                Box(Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 24.dp)) {
-                    Text("Tu carrito está vacío. Agrega productos desde el catálogo.")
-                }
-            }
-
-            AnimatedVisibility(visible = vm.items.isNotEmpty()) {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(vm.items) { itc ->
-                        Card(Modifier
+        topBar = { AppTopBar("Carrito", onBack = volver) },
+        bottomBar = {
+            if (items.isNotEmpty()) {
+                Surface(tonalElevation = 8.dp) {
+                    Row(
+                        Modifier
                             .fillMaxWidth()
-                            .animateContentSize()) {
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(itc.nombre, style = MaterialTheme.typography.titleMedium)
-                                    Text("Precio: $${itc.precio}")
-                                    Text("Cantidad: ${itc.cantidad}")
-                                }
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    OutlinedButton(onClick = { vm.restar(itc.id) }) {
-                                        Text("-")
-                                    }
-                                    OutlinedButton(
-                                        onClick = { vm.sumar(itc.id) }
-                                    ) {
-                                        Text("+")
-                                    }
-                                    OutlinedButton(onClick = { vm.eliminar(itc.id) }) {
-                                        Text("Eliminar")
-                                    }
-                                }
-                            }
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Total", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            PriceTag(total)
                         }
+                        PrimaryButton(text = "Proceder al pago", onClick = irAPago)
                     }
                 }
             }
+        }
+    ) { padding ->
+        if (items.isEmpty()) {
+            EmptyState(
+                title = "Tu carrito está vacío",
+                subtitle = "Agrega productos desde el catálogo"
+            )
+            return@Scaffold
+        }
 
-            Spacer(Modifier.height(8.dp))
-            Button(
-                onClick = irAPago,
-                enabled = vm.items.isNotEmpty(),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Ir a pago")
+        LazyColumn(
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(top = 12.dp, bottom = 12.dp)
+        ) {
+            items(items) { it ->
+                Card(shape = RoundedCornerShape(12.dp), elevation = CardDefaults.cardElevation(4.dp)) {
+                    Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        AsyncImage(
+                            model = it.urlImagen,
+                            contentDescription = it.nombre,
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(it.nombre, style = MaterialTheme.typography.titleMedium)
+                            Spacer(Modifier.height(4.dp))
+                            Text("Cantidad: ${it.cantidad}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(Modifier.height(4.dp))
+                            PriceTag(it.precio * it.cantidad)
+                        }
+                        TextButton(onClick = { vm.eliminar(it.id) }) { Text("Eliminar") }
+                    }
+                }
             }
         }
     }

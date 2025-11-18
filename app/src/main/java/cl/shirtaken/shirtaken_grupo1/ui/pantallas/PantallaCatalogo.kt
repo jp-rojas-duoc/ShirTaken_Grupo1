@@ -2,25 +2,21 @@
 
 package cl.shirtaken.shirtaken_grupo1.ui.pantallas
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.shirtaken.shirtaken_grupo1.model.Polera
+import cl.shirtaken.shirtaken_grupo1.ui.components.AppTopBar
+import cl.shirtaken.shirtaken_grupo1.ui.components.EmptyState
+import cl.shirtaken.shirtaken_grupo1.ui.components.ProductCard
 import cl.shirtaken.shirtaken_grupo1.viewmodel.PolerasViewModel
-import coil.compose.AsyncImage
 
 @Composable
 fun PantallaCatalogo(
@@ -29,12 +25,12 @@ fun PantallaCatalogo(
     abrirHistorial: (() -> Unit)? = null,
     vm: PolerasViewModel = viewModel()
 ) {
-    val catalogo: List<Polera> by vm.catalogoRemoto.collectAsState(initial = emptyList())
+    val catalogo by vm.catalogoRemoto.collectAsState(initial = emptyList())
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Catálogo") },
+            AppTopBar(
+                title = "Catálogo",
                 actions = {
                     TextButton(onClick = abrirCarrito) { Text("Carrito") }
                     if (abrirHistorial != null) TextButton(onClick = abrirHistorial) { Text("Historial") }
@@ -42,26 +38,24 @@ fun PantallaCatalogo(
             )
         }
     ) { padding ->
-        LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = padding) {
-            items(items = catalogo, key = { it.id ?: 0L }) { p: Polera ->
-                // ✅ FIX: Asegurar que siempre pasamos el ID correcto
-                val idSeguro = p.id?.toInt() ?: return@items
-                TarjetaPolera(p) {
-                    android.util.Log.d("DEBUG", "Click en polera: ID=${p.id}, nombre=${p.nombre}")
-                    abrirDetalle(idSeguro)
-                }
+        if (catalogo.isEmpty()) {
+            EmptyState(
+                title = "Aún no hay productos",
+                subtitle = "Intenta recargar el catálogo",
+                actionText = "Recargar",
+                onAction = { vm.cargarCatalogoRemoto() }
+            )
+            return@Scaffold
+        }
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = padding.calculateTopPadding() + 12.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(items = catalogo, key = { it.id }) { p: Polera ->
+                ProductCard(p) { abrirDetalle(p.id) }
             }
         }
     }
-}
-
-@Composable
-fun TarjetaPolera(p: Polera, onClick: () -> Unit) {
-    ListItem(
-        headlineContent = { Text(p.nombre, style = MaterialTheme.typography.titleMedium) },
-        supportingContent = { Text("${p.marca} - ${p.talla} - ${p.color} - $${p.precio}") },
-        leadingContent = { AsyncImage(model = p.urlImagen, contentDescription = p.nombre) },
-        modifier = Modifier.clickable(onClick = onClick)
-    )
-    HorizontalDivider()
 }

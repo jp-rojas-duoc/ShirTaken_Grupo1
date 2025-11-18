@@ -23,7 +23,6 @@ fun AppNavegacion() {
 
     NavHost(navController = nav, startDestination = "inicio") {
 
-        // Inicio: ahora con botón a historial
         composable("inicio") {
             PantallaInicio(
                 abrirCatalogo = { nav.navigate("catalogo") },
@@ -38,7 +37,6 @@ fun AppNavegacion() {
                 abrirHistorial = { nav.navigate("historial") }
             )
         }
-
 
         composable(
             route = "detalle/{id}",
@@ -74,7 +72,6 @@ fun AppNavegacion() {
             )
         }
 
-        // Nueva ruta: historial de compras
         composable("historial") {
             PantallaHistorial(
                 volver = { nav.popBackStack() }
