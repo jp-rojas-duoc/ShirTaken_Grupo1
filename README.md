@@ -275,10 +275,6 @@ ShirTaken/
 - Compatible con Android 8.0 (API 26) o superior
 - APK firmado en modo release lista para distribuir
 
-## 🔗 Links
-
-- [Documentación Técnica Detallada](./DOCUMENTACION_TECNICA.md)
-- [Backend Repository](https://github.com/tu-usuario/ShirTaken-Backend)
 
 ---
 
