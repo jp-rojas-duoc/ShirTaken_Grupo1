@@ -7,14 +7,12 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import cl.shirtaken.shirtaken_grupo1.model.ItemCarrito
 import cl.shirtaken.shirtaken_grupo1.model.Polera
-import cl.shirtaken.shirtaken_grupo1.repository.RepositorioPedidos
-import cl.shirtaken.shirtaken_grupo1.repository.RepositorioPolerasRoom
+import cl.shirtaken.shirtaken_grupo1.data.remote.PedidoItemDto
+import cl.shirtaken.shirtaken_grupo1.data.remote.PedidoRequestDto
+import cl.shirtaken.shirtaken_grupo1.data.remote.providePedidosApi
 import kotlinx.coroutines.launch
 
 class CarritoViewModel(app: Application) : AndroidViewModel(app) {
-
-    private val repoPoleras = RepositorioPolerasRoom(app)
-    private val repoPedidos = RepositorioPedidos(app)
 
     private val _items: SnapshotStateList<ItemCarrito> = mutableStateListOf()
     val items: List<ItemCarrito> get() = _items
@@ -31,18 +29,10 @@ class CarritoViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    // Suma validando stock; notifica por callback si no alcanza
-    fun sumar(id: Int, onSinStock: (() -> Unit)? = null) {
-        val item = _items.find { it.id == id } ?: return
-        viewModelScope.launch {
-            // Consulta stock actual en BD y compara con lo que quieres dejar
-            val stockDisponible = try { repoPoleras.consultarStock(item.id) } catch (_: Throwable) { 0 }
-            if (stockDisponible >= item.cantidad + 1) {
-                item.cantidad += 1
-                _items[_items.indexOf(item)] = item.copy()
-            } else {
-                onSinStock?.invoke()
-            }
+    fun sumar(id: Int) {
+        _items.find { it.id == id }?.let {
+            it.cantidad += 1
+            _items[_items.indexOf(it)] = it.copy()
         }
     }
 
@@ -63,25 +53,52 @@ class CarritoViewModel(app: Application) : AndroidViewModel(app) {
 
     fun limpiar() = _items.clear()
 
-    // Guarda pedido + descuenta stock; notifica resultado
-    fun confirmarCompra(
+    // Enviar pedido al backend
+    fun enviarPedidoAlBackend(
+        nombreCliente: String,
+        email: String,
+        telefono: String,
+        direccion: String?,
         onOk: (Long) -> Unit,
         onError: (String) -> Unit
     ) = viewModelScope.launch {
         try {
-            if (_items.isEmpty()) throw IllegalStateException("Carrito vacío")
-            // Descontar stock por cada ítem; si alguno falla, aborta
-            for (it in _items) {
-                val ok = repoPoleras.descontarStock(it.id, it.cantidad)
-                if (!ok) throw IllegalStateException("Sin stock para ${it.nombre}")
+            if (_items.isEmpty()) {
+                onError("Carrito vacío")
+                return@launch
             }
-            // Registrar pedido e items
-            val idPedido = repoPedidos.registrarPedido(_items.toList(), total)
+
+            // Construir DTOs
+            val itemsDto = _items.map { itc ->
+                PedidoItemDto(
+                    poleraId = itc.id.toLong(),
+                    cantidad = itc.cantidad,
+                    precioUnitario = itc.precio
+                )
+            }
+
+            val req = PedidoRequestDto(
+                nombreCliente = nombreCliente,
+                email = email,
+                telefono = telefono,
+                direccion = direccion,
+                items = itemsDto,
+                total = total
+            )
+
+            // Llamar API
+            val api = providePedidosApi()
+            val resp = api.crearPedido(req)
+
             // Limpiar carrito
             limpiar()
-            onOk(idPedido)
-        } catch (t: Throwable) {
-            onError(t.message ?: "Error al confirmar compra")
+
+            // Éxito
+            onOk(resp.id)
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            onError(e.message ?: "Error desconocido al crear pedido")
         }
     }
 }

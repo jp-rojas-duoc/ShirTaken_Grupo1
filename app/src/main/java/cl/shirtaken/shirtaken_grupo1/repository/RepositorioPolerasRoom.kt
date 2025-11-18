@@ -37,8 +37,10 @@ class RepositorioPolerasRoom(context: Context) {
         if (estaVacio()) {
             val base = listOf(
                 Polera(0, "Polera básica",  "ShirTaken",  9990, "M", "Negro",  "https://picsum.photos/300?1", conStock = true,  esFavorita = false),
-                Polera(0, "Polera logo",    "ShirTaken", 12990, "L", "Blanco", "https://picsum.photos/300?2", conStock = true,  esFavorita = false),
-                Polera(0, "Polera premium", "ShirTaken", 15990, "S", "Azul",   "https://picsum.photos/300?3", conStock = true,  esFavorita = true)
+                Polera(0, "Polera logo 1",    "ShirTaken", 12990, "L", "Blanco", "https://picsum.photos/300?2", conStock = true,  esFavorita = false),
+                Polera(0, "Polera premium", "ShirTaken", 15990, "S", "Azul",   "https://picsum.photos/300?3", conStock = true,  esFavorita = true),
+                Polera(0, "Polera Deportiva", "ShirTaken", 30000, "S", "Roja",   "https://picsum.photos/300?4", conStock = true,  esFavorita = true)
+
             )
             base.forEach { crear(it, stock = 10) }
         }

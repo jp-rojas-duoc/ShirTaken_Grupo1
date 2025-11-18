@@ -55,7 +55,7 @@ fun PantallaInicio(
         // Subtítulo que aparece con un fade-in
         AnimatedVisibility(
             visible = visible,
-            enter = fadeIn(animationSpec = tween(1000, delayMillis = 500))
+            enter = fadeIn(animationSpec = tween(2000, delayMillis = 500))
         ) {
             Text(
                 text = "Tu tienda de poleras",

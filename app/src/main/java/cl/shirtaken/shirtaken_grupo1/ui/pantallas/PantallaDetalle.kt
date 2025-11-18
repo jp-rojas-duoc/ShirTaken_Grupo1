@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -36,8 +37,18 @@ fun PantallaDetalle(
     vm: PolerasViewModel = viewModel()
 ) {
     var polera by remember { mutableStateOf<Polera?>(null) }
+    var cargando by remember { mutableStateOf(true) }
 
-    LaunchedEffect(id) { polera = vm.obtenerPorId(id) }
+    // ✅ Obtener por ID de forma CORRECTA
+    LaunchedEffect(id) {
+        try {
+            polera = vm.obtenerPorId(id)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            cargando = false
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -55,7 +66,7 @@ fun PantallaDetalle(
         },
         floatingActionButton = {
             val p = polera
-            if (p != null) {
+            if (p != null && !cargando) {
                 ExtendedFloatingActionButton(
                     text = { Text(if (p.conStock) "Agregar al carrito" else "Sin stock") },
                     icon = {},
@@ -64,23 +75,45 @@ fun PantallaDetalle(
             }
         }
     ) { padding ->
-        val p = polera
-        if (p != null) {
-            Column(Modifier.padding(padding).padding(16.dp)) {
-                AsyncImage(model = p.urlImagen, contentDescription = p.nombre)
-                Spacer(Modifier.height(12.dp))
-                Text(p.nombre, style = MaterialTheme.typography.titleLarge)
-                Text("${p.marca} • ${p.talla} • ${p.color}")
-                Text("Precio: $${p.precio}")
-                Text(
-                    if (p.conStock) "Con stock" else "Sin stock",
-                    color = if (p.conStock) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                )
-                Spacer(Modifier.height(8.dp))
-                Button(onClick = abrirCarrito) { Text("Ver carrito") }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            contentAlignment = Alignment.Center
+        ) {
+            if (cargando) {
+                CircularProgressIndicator()
+            } else {
+                val p = polera
+                if (p != null) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        AsyncImage(
+                            model = p.urlImagen,
+                            contentDescription = p.nombre,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(250.dp)
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Text(p.nombre, style = MaterialTheme.typography.titleLarge)
+                        Text("${p.marca} • ${p.talla} • ${p.color}")
+                        Text("Precio: $${p.precio}", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            if (p.conStock) "Con stock" else "Sin stock",
+                            color = if (p.conStock) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Button(onClick = abrirCarrito) { Text("Ver carrito") }
+                    }
+                } else {
+                    Text("No se encontró la pólera")
+                }
             }
-        } else {
-            Box(Modifier.padding(padding).fillMaxSize()) { CircularProgressIndicator() }
         }
     }
 }

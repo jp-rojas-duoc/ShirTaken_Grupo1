@@ -10,7 +10,7 @@ import androidx.navigation.navArgument
 import cl.shirtaken.shirtaken_grupo1.model.Polera
 import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaCatalogo
 import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaCarrito
-import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaCheckout
+import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaCheckoutLite
 import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaDetalle
 import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaInicio
 import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaHistorial
@@ -62,11 +62,10 @@ fun AppNavegacion() {
         }
 
         composable("checkout") {
-            PantallaCheckout(
+            PantallaCheckoutLite(
                 vm = vmCarrito,
                 cancelar = { nav.popBackStack() },
                 finalizar = {
-                    // Ir a historial y dejar carrito vacío (ya se limpia en confirmarCompra)
                     nav.navigate("historial") {
                         popUpTo("catalogo") { inclusive = false }
                         launchSingleTop = true
@@ -74,7 +73,6 @@ fun AppNavegacion() {
                 }
             )
         }
-
 
         // Nueva ruta: historial de compras
         composable("historial") {

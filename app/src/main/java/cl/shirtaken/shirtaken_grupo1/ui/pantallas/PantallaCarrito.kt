@@ -13,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cl.shirtaken.shirtaken_grupo1.viewmodel.CarritoViewModel
-import kotlinx.coroutines.launch
 
 @Composable
 fun PantallaCarrito(
@@ -22,7 +21,6 @@ fun PantallaCarrito(
     irAPago: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -34,45 +32,51 @@ fun PantallaCarrito(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { padding ->
         Column(
-            Modifier.fillMaxSize().padding(padding).padding(16.dp),
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text("Total: $${vm.total}", style = MaterialTheme.typography.titleMedium)
 
             AnimatedVisibility(visible = vm.items.isEmpty()) {
-                Box(Modifier.fillMaxWidth().padding(vertical = 24.dp)) {
+                Box(Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 24.dp)) {
                     Text("Tu carrito está vacío. Agrega productos desde el catálogo.")
                 }
             }
 
             AnimatedVisibility(visible = vm.items.isNotEmpty()) {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(vm.items) { it ->
-                        Card(Modifier.fillMaxWidth().animateContentSize()) {
+                    items(vm.items) { itc ->
+                        Card(Modifier
+                            .fillMaxWidth()
+                            .animateContentSize()) {
                             Row(
-                                Modifier.fillMaxWidth().padding(12.dp),
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(Modifier.weight(1f)) {
-                                    Text(it.nombre, style = MaterialTheme.typography.titleMedium)
-                                    Text("Precio: $${it.precio}")
-                                    Text("Cantidad: ${it.cantidad}")
+                                    Text(itc.nombre, style = MaterialTheme.typography.titleMedium)
+                                    Text("Precio: $${itc.precio}")
+                                    Text("Cantidad: ${itc.cantidad}")
                                 }
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    OutlinedButton(onClick = { vm.restar(it.id) }) { Text("-") }
+                                    OutlinedButton(onClick = { vm.restar(itc.id) }) {
+                                        Text("-")
+                                    }
                                     OutlinedButton(
-                                        onClick = {
-                                            vm.sumar(
-                                                id = it.id,
-                                                onSinStock = {
-                                                    scope.launch {
-                                                        snackbarHostState.showSnackbar("Sin stock disponible para ${it.nombre}")
-                                                    }
-                                                }
-                                            )
-                                        }
-                                    ) { Text("+") }
-                                    OutlinedButton(onClick = { vm.eliminar(it.id) }) { Text("Eliminar") }
+                                        onClick = { vm.sumar(itc.id) }
+                                    ) {
+                                        Text("+")
+                                    }
+                                    OutlinedButton(onClick = { vm.eliminar(itc.id) }) {
+                                        Text("Eliminar")
+                                    }
                                 }
                             }
                         }
@@ -85,7 +89,9 @@ fun PantallaCarrito(
                 onClick = irAPago,
                 enabled = vm.items.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth()
-            ) { Text("Ir a pago") }
+            ) {
+                Text("Ir a pago")
+            }
         }
     }
 }

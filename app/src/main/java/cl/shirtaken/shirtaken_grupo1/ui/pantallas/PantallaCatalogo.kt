@@ -26,10 +26,10 @@ import coil.compose.AsyncImage
 fun PantallaCatalogo(
     abrirDetalle: (Int) -> Unit,
     abrirCarrito: () -> Unit,
-    abrirHistorial: (() -> Unit)? = null, // opcional para navegar a historial
+    abrirHistorial: (() -> Unit)? = null,
     vm: PolerasViewModel = viewModel()
 ) {
-    val catalogo by vm.catalogo.collectAsState()
+    val catalogo: List<Polera> by vm.catalogoRemoto.collectAsState(initial = emptyList())
 
     Scaffold(
         topBar = {
@@ -37,27 +37,29 @@ fun PantallaCatalogo(
                 title = { Text("Catálogo") },
                 actions = {
                     TextButton(onClick = abrirCarrito) { Text("Carrito") }
-                    // Botón Historial (si se entrega callback desde navegación)
-                    if (abrirHistorial != null) {
-                        TextButton(onClick = abrirHistorial) { Text("Historial") }
-                    }
+                    if (abrirHistorial != null) TextButton(onClick = abrirHistorial) { Text("Historial") }
                 }
             )
         }
     ) { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = padding) {
-            items(catalogo) { p ->
-                TarjetaPolera(p) { abrirDetalle(p.id) }
+            items(items = catalogo, key = { it.id ?: 0L }) { p: Polera ->
+                // ✅ FIX: Asegurar que siempre pasamos el ID correcto
+                val idSeguro = p.id?.toInt() ?: return@items
+                TarjetaPolera(p) {
+                    android.util.Log.d("DEBUG", "Click en polera: ID=${p.id}, nombre=${p.nombre}")
+                    abrirDetalle(idSeguro)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun TarjetaPolera(p: Polera, onClick: () -> Unit) {
+fun TarjetaPolera(p: Polera, onClick: () -> Unit) {
     ListItem(
-        headlineContent = { Text(p.nombre) },
-        supportingContent = { Text("${p.marca} • ${p.talla} • ${p.color} • $${p.precio}") },
+        headlineContent = { Text(p.nombre, style = MaterialTheme.typography.titleMedium) },
+        supportingContent = { Text("${p.marca} - ${p.talla} - ${p.color} - $${p.precio}") },
         leadingContent = { AsyncImage(model = p.urlImagen, contentDescription = p.nombre) },
         modifier = Modifier.clickable(onClick = onClick)
     )
