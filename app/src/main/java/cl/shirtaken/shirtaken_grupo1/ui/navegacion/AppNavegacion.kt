@@ -1,4 +1,5 @@
 package cl.shirtaken.shirtaken_grupo1.ui.navegacion
+import androidx.compose.runtime.remember
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -15,11 +16,21 @@ import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaDetalle
 import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaInicio
 import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PantallaHistorial
 import cl.shirtaken.shirtaken_grupo1.viewmodel.CarritoViewModel
+import cl.shirtaken.shirtaken_grupo1.viewmodel.HistorialViewModel
+import cl.shirtaken.shirtaken_grupo1.viewmodel.HistorialViewModelFactory
+import cl.shirtaken.shirtaken_grupo1.repository.RepositorioPedidos
+import cl.shirtaken.shirtaken_grupo1.data.remote.providePedidosApi
 
 @Composable
 fun AppNavegacion() {
     val nav = rememberNavController()
     val vmCarrito: CarritoViewModel = viewModel()
+
+    // CREA el repositorio y el factory SOLO UNA VEZ usando remember
+    val repoPedidos = remember { RepositorioPedidos(providePedidosApi()) }
+    val vmHistorial: HistorialViewModel = viewModel(
+        factory = HistorialViewModelFactory(repoPedidos)
+    )
 
     NavHost(navController = nav, startDestination = "inicio") {
 
@@ -74,7 +85,8 @@ fun AppNavegacion() {
 
         composable("historial") {
             PantallaHistorial(
-                volver = { nav.popBackStack() }
+                volver = { nav.popBackStack() },
+                viewModel = vmHistorial
             )
         }
     }

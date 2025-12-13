@@ -2,7 +2,6 @@
 
 package cl.shirtaken.shirtaken_grupo1.ui.pantallas
 
-import android.app.Application
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -10,15 +9,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import cl.shirtaken.shirtaken_grupo1.viewmodel.CarritoViewModel
-import cl.shirtaken.shirtaken_grupo1.repository.RepositorioPedidos
-import kotlinx.coroutines.launch
 import cl.shirtaken.shirtaken_grupo1.data.remote.PedidoItemDto
 import cl.shirtaken.shirtaken_grupo1.data.remote.PedidoRequestDto
 import cl.shirtaken.shirtaken_grupo1.data.remote.providePedidosApi
-
+import kotlinx.coroutines.launch
 
 enum class EntregaLite { RETIRO, ENVIO }
 
@@ -35,9 +31,6 @@ fun PantallaCheckoutLite(
     var entrega by remember { mutableStateOf(EntregaLite.RETIRO) }
     var cargando by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-
-    val context = LocalContext.current
-    val repoPedidos = remember { RepositorioPedidos(context) }
 
     val valido = nombre.isNotBlank() && email.isNotBlank() && telefono.isNotBlank()
             && (entrega == EntregaLite.RETIRO || direccion.isNotBlank())
@@ -164,9 +157,6 @@ fun PantallaCheckoutLite(
                             // Llamar al backend
                             val api = providePedidosApi()
                             val resp = api.crearPedido(req)
-
-                            // ✅ NUEVO: Guardar en Room (historial local)
-                            repoPedidos.registrarPedido(vm.items, vm.total)
 
                             // Éxito: limpiar y finalizar
                             vm.limpiar()

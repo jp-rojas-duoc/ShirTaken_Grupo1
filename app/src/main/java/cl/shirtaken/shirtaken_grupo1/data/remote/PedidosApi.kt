@@ -3,11 +3,13 @@ package cl.shirtaken.shirtaken_grupo1.data.remote
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
+// --- DTOs para creación y respuesta ---
 data class PedidoItemDto(
     val poleraId: Long,
     val cantidad: Int,
@@ -29,17 +31,22 @@ data class PedidoResponseDto(
     val total: Int
 )
 
+// ---- NO declares nuevamente PedidoRemoto aquí ----
+
 interface PedidosApi {
     @POST("api/pedidos")
     suspend fun crearPedido(@Body request: PedidoRequestDto): PedidoResponseDto
+
+    @GET("api/pedidos")
+    suspend fun getPedidos(): List<PedidoRemoto>
 }
 
-// Logging interceptor para debug
+// --- Logging interceptor para debug ---
 private val loggingInterceptor = HttpLoggingInterceptor().apply {
     level = HttpLoggingInterceptor.Level.BODY
 }
 
-// OkHttpClient con timeout más largo
+// --- OkHttpClient con timeout más largo ---
 private val httpClient = OkHttpClient.Builder()
     .addInterceptor(loggingInterceptor)
     .connectTimeout(30, TimeUnit.SECONDS)
@@ -47,9 +54,9 @@ private val httpClient = OkHttpClient.Builder()
     .writeTimeout(30, TimeUnit.SECONDS)
     .build()
 
-// Instancia única de Retrofit
+// --- Instancia única de Retrofit ---
 private val retrofit = Retrofit.Builder()
-    .baseUrl("http://192.168.1.136:8080/")  // ✅ CAMBIO: Tu IP real
+    .baseUrl("http://10.220.177.54:8080/")  // tu IP real
     .client(httpClient)
     .addConverterFactory(GsonConverterFactory.create())
     .build()

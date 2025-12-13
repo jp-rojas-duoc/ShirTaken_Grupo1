@@ -5,9 +5,10 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
-import cl.shirtaken.shirtaken_grupo1.model.Polera
 import java.util.concurrent.TimeUnit
+import cl.shirtaken.shirtaken_grupo1.model.Polera
 
+// DTO que coincide con tu backend
 data class PoleraDto(
     val id: Long? = null,
     val nombre: String,
@@ -40,7 +41,10 @@ interface PolerasApi {
     suspend fun consultarStock(@Path("id") id: Long): Int
 
     @PUT("api/poleras/{id}/stock")
-    suspend fun descontarStock(@Path("id") id: Long, @Query("cantidad") cantidad: Int): Boolean
+    suspend fun descontarStock(
+        @Path("id") id: Long,
+        @Query("cantidad") cantidad: Int
+    ): Boolean
 }
 
 // Logging interceptor
@@ -56,25 +60,30 @@ private val httpClient = OkHttpClient.Builder()
     .writeTimeout(30, TimeUnit.SECONDS)
     .build()
 
-// Retrofit instance para Póleras
-private val retrofitPoleras = Retrofit.Builder()
-    .baseUrl("http://192.168.1.136:8080/")  // ✅ CAMBIO: Tu IP real
+// IMPORTANTE: baseUrl para dispositivo físico
+// Si pruebas en emulador usa "http://10.0.2.2:8080/"
+// En teléfono físico, tu IP LAN (asegúrate que el teléfono accede a ese host)
+private const val BASE_URL = "http://10.220.177.54:8080/"
+
+
+
+private val retrofitPoleras: Retrofit = Retrofit.Builder()
+    .baseUrl(BASE_URL)
     .client(httpClient)
     .addConverterFactory(GsonConverterFactory.create())
     .build()
 
-fun providePolerasApi(): PolerasApi =
-    retrofitPoleras.create(PolerasApi::class.java)
+fun providePolerasApi(): PolerasApi = retrofitPoleras.create(PolerasApi::class.java)
 
-// ✅ AGREGAR ESTA EXTENSIÓN - Convierte DTO a Modelo
-fun PoleraDto.aModelo(): Polera = Polera(
-    id = this.id?.toInt() ?: 0,
-    nombre = this.nombre,
-    marca = this.marca,
+// Conversión robusta DTO -> Modelo (evita id=0 y limpia espacios)
+fun PoleraDto.aModelo(index: Int = 0): Polera = Polera(
+    id = (this.id ?: (index + 1).toLong()).toInt(),
+    nombre = this.nombre.trim(),
+    marca = this.marca.trim(),
     precio = this.precio,
-    talla = this.talla,
-    color = this.color,
-    urlImagen = this.urlImagen,
+    talla = this.talla.trim(),
+    color = this.color.trim(),
+    urlImagen = this.urlImagen.trim(),
     conStock = this.stock > 0,
     esFavorita = this.esFavorita
 )

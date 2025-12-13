@@ -42,4 +42,31 @@ class CarritoViewModelTest {
 
         assertEquals("Carrito vacío debe tener total 0", 0, total)
     }
+
+    // ✅ Nuevo: verificar que sumar una polera aumenta el total
+    @Test
+    fun testAgregarItemIncrementaTotal() {
+        val itemsInicial = listOf(
+            ItemCarrito(1, "Polera 1", 1000, 1, "url")
+        )
+        val totalInicial = itemsInicial.sumOf { it.precio * it.cantidad }
+
+        val itemsNuevo = itemsInicial + ItemCarrito(2, "Polera 2", 2000, 2, "url2")
+        val totalNuevo = itemsNuevo.sumOf { it.precio * it.cantidad }
+
+        assertEquals("Total inicial debe ser 1000", 1000, totalInicial)
+        assertEquals("Total nuevo debe ser 5000", 5000, totalNuevo)
+    }
+
+    // ⚠️ Test diseñado para FALLAR a propósito
+    @Test
+    fun testQueDebeFallar() {
+        val items = listOf(
+            ItemCarrito(1, "Polera 1", 1000, 1, "url")
+        )
+        val total = items.sumOf { it.precio * it.cantidad }
+
+        // Esto ES INCORRECTO a propósito: el total real es 1000
+        assertEquals("Este test está hecho para fallar", 999, total)
+    }
 }

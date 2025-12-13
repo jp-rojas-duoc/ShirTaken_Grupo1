@@ -1,6 +1,7 @@
 package cl.shirtaken.shirtaken_grupo1.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import cl.shirtaken.shirtaken_grupo1.model.Polera
@@ -26,35 +27,32 @@ class PolerasViewModel(app: Application) : AndroidViewModel(app) {
     fun actualizar(p: Polera, stock: Int) = viewModelScope.launch { repoLocal.actualizar(p, stock) }
     fun eliminar(p: Polera) = viewModelScope.launch { repoLocal.eliminar(p) }
 
-    // ✅ FIX: Buscar directamente en el backend si no está en catálogo local
     suspend fun obtenerPorId(id: Int): Polera? {
-        // Primero intenta en el catálogo remoto en memoria
         var polera = _catalogoRemoto.value.firstOrNull { it.id == id }
-
-        // Si no está, consulta directamente al backend
         if (polera == null) {
-            polera = try {
-                repoRemoto.obtenerPolera(id.toLong())
-            } catch (e: Exception) {
-                null
-            }
+            polera = try { repoRemoto.obtenerPolera(id.toLong()) } catch (_: Exception) { null }
         }
-
         return polera
     }
 
     fun cargarCatalogoRemoto() = viewModelScope.launch {
         try {
             val lista = repoRemoto.obtenerCatalogo()
-            _catalogoRemoto.value = lista
+            Log.d("PolerasVM", "Catalogo remoto: ${lista.size}")
+            // Fallback demo si llega vacío (solo para depurar UI)
+            _catalogoRemoto.value = if (lista.isNotEmpty()) lista else listOf(
+                Polera(1,"Demo 1","Test",12990,"M","Negro","",true,false),
+                Polera(2,"Demo 2","Test",13990,"L","Blanco","",true,false)
+            )
         } catch (e: Throwable) {
+            Log.e("PolerasVM", "Error cargarCatalogoRemoto", e)
             _catalogoRemoto.value = emptyList()
         }
     }
 
     suspend fun consultarStockRemoto(poleraId: Int): Int = try {
         repoRemoto.consultarStock(poleraId)
-    } catch (e: Throwable) {
+    } catch (_: Throwable) {
         0
     }
 
@@ -65,11 +63,7 @@ class PolerasViewModel(app: Application) : AndroidViewModel(app) {
                 val actual = repoLocal.observarCatalogo().firstOrNull().orEmpty()
                 actual.forEach { repoLocal.eliminar(it) }
             }
-            remoto.forEach { p ->
-                repoLocal.crear(p, stock = 100)
-            }
-        } catch (_: Throwable) {
-            // Ignora errores
-        }
+            remoto.forEach { p -> repoLocal.crear(p, stock = 100) }
+        } catch (_: Throwable) { }
     }
 }

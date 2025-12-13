@@ -6,12 +6,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cl.shirtaken.shirtaken_grupo1.ui.components.AppTopBar
 import cl.shirtaken.shirtaken_grupo1.ui.components.EmptyState
 import cl.shirtaken.shirtaken_grupo1.ui.components.PriceTag
+import cl.shirtaken.shirtaken_grupo1.viewmodel.HistorialViewModel
 
 data class PedidoUi(
     val id: Int,
@@ -23,8 +24,15 @@ data class PedidoUi(
 @Composable
 fun PantallaHistorial(
     volver: () -> Unit,
-    pedidos: List<PedidoUi> = emptyList()
+    viewModel: HistorialViewModel
 ) {
+    val pedidos by viewModel.historial.collectAsState()
+
+    // Carga pedidos automáticamente cuando la pantalla aparece
+    LaunchedEffect(Unit) {
+        viewModel.cargarHistorial()
+    }
+
     Scaffold(
         topBar = { AppTopBar("Historial de compras", onBack = volver) }
     ) { padding ->
@@ -35,7 +43,6 @@ fun PantallaHistorial(
             )
             return@Scaffold
         }
-
         LazyColumn(
             Modifier
                 .fillMaxSize()

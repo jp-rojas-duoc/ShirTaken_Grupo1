@@ -1,31 +1,17 @@
 package cl.shirtaken.shirtaken_grupo1.repository
 
-import android.content.Context
-import cl.shirtaken.shirtaken_grupo1.data.local.AppDb
-import cl.shirtaken.shirtaken_grupo1.data.local.PedidoEntity
-import cl.shirtaken.shirtaken_grupo1.data.local.PedidoItemEntity
-import cl.shirtaken.shirtaken_grupo1.model.ItemCarrito
+import cl.shirtaken.shirtaken_grupo1.data.remote.PedidosApi
+import cl.shirtaken.shirtaken_grupo1.ui.pantallas.PedidoUi
 
-class RepositorioPedidos(context: Context) {
-    private val db = AppDb.get(context)
-    private val pedidoDao = db.pedidoDao()
-
-    fun observarHistorial() = pedidoDao.observarHistorial()
-
-    suspend fun registrarPedido(items: List<ItemCarrito>, total: Int): Long {
-        val idPedido = pedidoDao.insertarPedido(
-            PedidoEntity(fechaMs = System.currentTimeMillis(), total = total)
-        ).toInt()
-        val itemsEntity = items.map {
-            PedidoItemEntity(
-                pedidoId = idPedido,
-                poleraId = it.id,
-                nombre = it.nombre,
-                precio = it.precio,
-                cantidad = it.cantidad
+class RepositorioPedidos(private val pedidosApi: PedidosApi) {
+    suspend fun obtenerPedidosBackend(): List<PedidoUi> {
+        return pedidosApi.getPedidos().map {
+            PedidoUi(
+                id = it.id,
+                fecha = it.fecha,
+                total = it.total,
+                estado = "Completado" // Cambia si tu backend devuelve un campo diferente para el estado
             )
         }
-        pedidoDao.insertarItems(itemsEntity)
-        return idPedido.toLong()
     }
 }
