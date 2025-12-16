@@ -1,4 +1,4 @@
-# ShirTaken - E-commerce de Póleras 👕
+#Examen Transversal. ShirTaken - E-commerce de Póleras 👕
 
 [![Android](https://img.shields.io/badge/Android-Kotlin-brightgreen)](https://www.android.com)
 [![Spring Boot](https://img.shields.io/badge/Backend-Spring%20Boot-green)](https://spring.io)
